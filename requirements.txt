@@ -1,0 +1,46 @@
+# requirements.txt
+# AI Coder Multi-Agent System Dependencies
+# 
+# Install with: pip install -r requirements.txt
+
+# =============================================================================
+# MCP (Model Context Protocol) Dependencies
+# =============================================================================
+mcp>=1.0.0                      # Model Context Protocol core library
+langchain-mcp-adapters>=0.1.0   # LangChain adapters for MCP tools
+
+# =============================================================================
+# LangChain and LangGraph Dependencies
+# =============================================================================
+langchain>=0.3.0                # LangChain core library
+langchain-core>=0.3.0           # LangChain core abstractions
+langgraph>=0.2.0                # LangGraph for agent orchestration
+langchain-google-genai>=2.0.0   # Google Generative AI integration
+
+# =============================================================================
+# Google AI Dependencies
+# =============================================================================
+google-generativeai>=0.8.0      # Google Generative AI SDK
+
+# =============================================================================
+# GUI Dependencies
+# =============================================================================
+gradio>=4.0.0                   # Web-based GUI framework
+
+# =============================================================================
+# Visualization Dependencies (for generated code)
+# =============================================================================
+matplotlib>=3.7.0               # Chart generation
+numpy>=1.24.0                   # Numerical operations
+
+# =============================================================================
+# Testing Dependencies
+# =============================================================================
+pytest>=7.4.0                   # Test framework
+pytest-asyncio>=0.21.0          # Async test support
+
+# =============================================================================
+# Utility Dependencies
+# =============================================================================
+python-dateutil>=2.8.0          # Date parsing utilities
+
