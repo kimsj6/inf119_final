@@ -37,6 +37,7 @@ from langgraph.prebuilt import create_react_agent
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage
 import asyncio
+import sys
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
@@ -345,8 +346,10 @@ async def get_mcp_session() -> AsyncGenerator[ClientSession, None]:
             # Use tools...
     """
     # Configure server parameters to start the MCP server
+    # Use sys.executable to ensure we use the same Python interpreter
+    # This works across different systems (macOS, Linux, Windows)
     server_params = StdioServerParameters(
-        command="python",
+        command=sys.executable,
         args=["server.py"],
     )
 
