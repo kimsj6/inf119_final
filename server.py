@@ -1,6 +1,6 @@
 # server.py
 # Name: Junxi Chen, Mark Qiu, Sung Jin Kim
-# Student ID: 70714925
+# Student ID: 70714925, , 10906553
 #
 # Description: MCP Server for the AI Coder Multi-Agent System
 # This module implements the MCP server that provides tools for the agents.
@@ -79,61 +79,6 @@ def validate_python_syntax(code: str) -> str:
     except SyntaxError as e:
         return f"Syntax error at line {e.lineno}: {e.msg}"
 
-
-# =============================================================================
-# TEST EXECUTION TOOLS
-# =============================================================================
-# These tools handle running pytest on generated test files.
-# =============================================================================
-
-@mcp.tool()
-def run_tests(test_filename: str) -> str:
-    """
-    Run pytest on a test file and return the results.
-    
-    This tool executes pytest in a subprocess on the specified test file.
-    It captures both stdout and stderr output and returns the combined result.
-    
-    Args:
-        test_filename: The test file to run (path relative to output directory)
-                      Example: "test_expense_comparator.py"
-    
-    Returns:
-        str: Pytest output including test results, passes, failures, and any errors
-        
-    Note:
-        - Has a 120-second timeout to prevent hanging
-        - Runs with -v flag for verbose output
-        - Uses --tb=short for concise tracebacks
-    """
-    full_path = os.path.join(OUTPUT_DIR, test_filename)
-    
-    try:
-        # Run pytest as a subprocess
-        # Using sys.executable ensures we use the same Python interpreter
-        result = subprocess.run(
-            [sys.executable, "-m", "pytest", full_path, "-v", "--tb=short"],
-            capture_output=True,
-            text=True,
-            timeout=120,  # 2-minute timeout
-            cwd=OUTPUT_DIR  # Run from output directory for proper imports
-        )
-        
-        # Combine stdout and stderr for complete output
-        output = ""
-        if result.stdout:
-            output += result.stdout
-        if result.stderr:
-            output += f"\nSTDERR:\n{result.stderr}"
-        
-        return output if output else "Tests completed with no output"
-    
-    except subprocess.TimeoutExpired:
-        return "Error: Tests timed out after 120 seconds"
-    except FileNotFoundError:
-        return f"Error: Test file not found: {full_path}"
-    except Exception as e:
-        return f"Error running tests: {str(e)}"
 
 
 # =============================================================================

@@ -1,6 +1,6 @@
 # client.py
 # Name: Junxi Chen, Mark Qiu, Sung Jin Kim
-# Student ID: 70714925
+# Student ID: 70714925, , 10906553
 #
 # Description: Multi-Agent System Client using Model Context Protocol (MCP)
 # This module implements the multi-agent architecture for the AI Coder system.
@@ -57,7 +57,7 @@ from usage_tracker import get_callbacks, global_tracker
 # Role: Analyzes raw software descriptions and extracts structured requirements
 # This agent is the first in the pipeline and sets the foundation for code generation
 requirements_model = ChatGoogleGenerativeAI(
-    model="gemini-2.0-flash",
+    model="gemini-2.5-flash",
     temperature=0,
     callbacks=get_callbacks(),  # Enable usage tracking
 )
@@ -66,7 +66,7 @@ requirements_model = ChatGoogleGenerativeAI(
 # Role: Generates complete, runnable Python code based on analyzed requirements
 # This agent creates the entire application structure with proper modularity
 code_model = ChatGoogleGenerativeAI(
-    model="gemini-2.0-flash",
+    model="gemini-2.5-flash",
     temperature=0,
     callbacks=get_callbacks(),  # Enable usage tracking
 )
@@ -75,7 +75,7 @@ code_model = ChatGoogleGenerativeAI(
 # Role: Creates comprehensive test cases and executes them to verify code quality
 # This agent ensures the generated code meets the 80% pass rate requirement
 test_model = ChatGoogleGenerativeAI(
-    model="gemini-2.0-flash",
+    model="gemini-2.5-flash",
     temperature=0,
     callbacks=get_callbacks(),  # Enable usage tracking
 )
@@ -98,17 +98,6 @@ timeframes. Users can also set custom date ranges for comparison. The main funct
 of the software is to provide users with a clear understanding of their spending 
 patterns and identify areas where they can make adjustments to improve their 
 financial well-being.
-
-KEY FUNCTIONAL REQUIREMENTS:
-1. Expense Input: Users can add expenses with amount, category, date, and description
-2. Category Management: Support for predefined categories (groceries, transportation, 
-   entertainment, utilities, healthcare, dining, shopping, other)
-3. Date Range Filtering: Filter expenses by custom date ranges
-4. Expense Comparison: Compare spending between two different time periods
-5. Visualization: Generate charts showing expense distribution and trends
-6. Data Persistence: Save and load expense data from JSON files
-7. Reporting: Generate summary reports with statistics (total, average, min, max)
-8. Command-line Interface: User-friendly CLI for all operations
 """
 
 
@@ -235,7 +224,7 @@ async def run_code_agent(requirements: str, session: ClientSession) -> str:
     {requirements}
 
     INSTRUCTIONS:
-    1. Carefully read the requirements document and plan the application structure.
+    1. Carefully read the requirements document and plan the simple user interactive application structure.
     2. Use 'create_directory' to create this directory: - 'expense_comparator'
     3. Under 'expense_comparator', create these Python modules using 'write_file':
         - 'expense_comparator/__init__.py'
@@ -255,8 +244,8 @@ async def run_code_agent(requirements: str, session: ClientSession) -> str:
         - Implement the behavior described in the requirements (data models, core functions, etc.).
         - Include type hints and docstrings for functions/classes.
         - Use clean imports and avoid circular dependencies.
-        - Be runnable via: python -m expense_comparator.main or similar.
-    6. At the end, create a small 'run_app.py' in the root (not inside the package) that shows how to use the application, using 'write_file("run_app.py", ...)'.
+        - Be runnable and give have simple and interactive CLI menu.
+    6. At the end, create a small `run_app.py` in the root (not inside the package) that works as a simple entry point to the application, using `write_file("run_app.py", ...)`.
     7. In your final message back to the user:
         - Summarize the created files and their purpose.
 
@@ -286,10 +275,7 @@ async def run_test_agent(requirements: str, session: ClientSession) -> str:
     
     This agent is responsible for:
     1. Reading the generated code files to understand implementation
-    2. Creating comprehensive test cases (minimum 10)
-    3. Testing all major functionality
-    4. Executing tests and reporting results
-    5. Ensuring 80%+ pass rate
+    2. Creating comprehensive test cases (minimum 10) that tests all major functionality
     
     Args:
         requirements: Original requirements for reference
@@ -309,53 +295,48 @@ async def run_test_agent(requirements: str, session: ClientSession) -> str:
     # This prompt ensures comprehensive test coverage
     prompt = f"""You are a Test Generator Agent. Create test cases for the Expense Comparator application.
 
-    REQUIREMENTS (truncated): {requirements[:500]}...
+    REQUIREMENTS DOCUMENT:
+    {requirements}
 
     TOOLS YOU CAN USE:
     - read_file(filename: str)
     - write_file(filename: str, content: str)
     - append_to_file(filename: str, content: str)
-    - run_tests(test_filename: str)
 
-    INSTRUCTIONS:
-    1. Use the requirements text above as your primary reference. 
-    Only use the 'read_file' tool if you really need to inspect a specific module's implementation.
-    When you do call 'read_file', read each file at most once and keep its contents in your reasoning
-    instead of calling the tool repeatedly.
-
-    Relevant code files (if they exist):
+    STEPS:
+    1. Read ONLY the high-level code files using 'read_file':
     - expense_comparator/models.py
     - expense_comparator/expense_manager.py
     - expense_comparator/comparator.py
     - expense_comparator/data_store.py
 
-    2. Create a single pytest file named 'test_expense_comparator.py' with AT LEAST 12 independent test
-    functions that together cover the full behavior of the application.
+    2. Create 'test_expense_comparator.py' with **between 12 and 15 tests total**.
+    - Each test should:
+        - Be small and focused on a single behavior
+        - Use clear, descriptive names like test_add_expense_valid, test_add_expense_invalid_amount, etc.
+        - Use simple inputs and assertions
+    - Prefer a few well-chosen tests over many exhaustive ones.
 
-    Requirements for the tests:
-    - You MUST write the entire test file in ONE call to:
-        write_file("test_expense_comparator.py", <full file content>)
-    - Each test function must:
-        - Have a descriptive name like test_<feature>_<scenario>
-        - Have a short docstring explaining what it covers
-        - Use clear assert statements
-    - Across all tests, cover at least:
-        - Expense model creation and validation
-        - Category handling (enums or constants)
-        - Adding, retrieving, and deleting expenses
-        - Filtering by category and by date range
-        - Comparing two periods of expenses
-        - Saving to and loading from JSON, including edge cases
+    3. IMPORTANT CONSTRAINTS:
+    - Do NOT import external libraries
+    - Tests may only import:
+        - pytest
+        - Python standard library modules if truly needed (e.g., datetime)
+        - The project modules: expense_comparator.models, expense_comparator.expense_manager,
+        expense_comparator.comparator, expense_comparator.data_store
+    - Treat the database / storage layer as a black box:
+        - Call the public APIs (e.g., ExpenseManager methods) instead of touching DB connections directly.
+        - Do NOT open connections manually or execute raw SQL in tests.
 
-    3. After you have written 'test_expense_comparator.py', call 'run_tests("test_expense_comparator.py")'
-    EXACTLY ONCE to execute the tests and see the results.
+    4. Write all tests into a single file 'test_expense_comparator.py' using 'write_file'.
+    - No need to over-optimize fixtures; use fixtures only if they make the code clearer.
+    - Aim for readability and simplicity.
 
-    4. In your final message back to the user:
-    - State how many tests you created.
-    - Summarize what major behaviors they cover.
-    - Summarize the pytest output and approximate pass rate (e.g., "10/12 tests passed, ~83%").
+    5. In your final message, summarize:
+    - How many tests you created
+    - What main behaviors are covered
 
-    Target: 80%+ pass rate with a minimum of 12 tests.
+    Remember: do not print code in the chat. Use 'write_file' to actually create the files in the output directory.
     """
 
     # Execute the agent with the prompt

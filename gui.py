@@ -247,11 +247,11 @@ def create_gui() -> gr.Blocks:
     
     with gr.Blocks(
         title="AI Coder - Multi-Agent System",
-        css=custom_css,
-        theme=gr.themes.Soft(
-            primary_hue="indigo",
-            secondary_hue="blue",
-        )
+        #css=custom_css,
+        #theme=gr.themes.Soft(
+        #    primary_hue="indigo",
+        #    secondary_hue="blue",
+        #)
     ) as demo:
         
         # Header
@@ -336,12 +336,6 @@ def create_gui() -> gr.Blocks:
                     
                     # Test Results Tab
                     with gr.TabItem("🧪 Test Results"):
-                        test_output = gr.Textbox(
-                            label="Test Generation & Execution Results",
-                            lines=20,
-                            interactive=False,
-                            elem_classes=["output-box"]
-                        )
                         test_code_output = gr.Textbox(
                             label="Test File Content",
                             lines=25,
@@ -408,7 +402,6 @@ def create_gui() -> gr.Blocks:
                     requirements,
                     code_summary,
                     files_content,
-                    test_results,
                     test_code,
                     usage_json,
                     usage_summary
@@ -436,7 +429,6 @@ def create_gui() -> gr.Blocks:
                 requirements_output,
                 code_output,
                 files_output,
-                test_output,
                 test_code_output,
                 usage_json_output,
                 usage_summary_output
@@ -451,7 +443,6 @@ def create_gui() -> gr.Blocks:
                 "",  # requirements_output
                 "",  # code_output
                 "",  # files_output
-                "",  # test_output
                 "",  # test_code_output
                 "{}",  # usage_json_output
                 ""  # usage_summary_output
@@ -465,7 +456,6 @@ def create_gui() -> gr.Blocks:
                 requirements_output,
                 code_output,
                 files_output,
-                test_output,
                 test_code_output,
                 usage_json_output,
                 usage_summary_output
@@ -477,7 +467,7 @@ def create_gui() -> gr.Blocks:
             outputs=[files_output]
         )
     
-    return demo
+    return demo, custom_css
 
 
 def main():
@@ -494,12 +484,17 @@ def main():
     os.makedirs(output_dir, exist_ok=True)
     
     # Create and launch the GUI
-    demo = create_gui()
+    demo, custom_css = create_gui()
     demo.launch(
         server_name="127.0.0.1",
         server_port=7860,
         share=False,
-        show_error=True
+        show_error=True,
+        css=custom_css,
+        theme=gr.themes.Soft(
+            primary_hue="indigo",
+            secondary_hue="blue",
+        ),
     )
 
 

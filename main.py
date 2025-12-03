@@ -80,6 +80,7 @@ For more information, see README.md
         print("=" * 60)
         
         from gui import create_gui
+        import gradio as gr
         import os
         
         # Ensure output directory exists
@@ -87,12 +88,17 @@ For more information, see README.md
         os.makedirs(output_dir, exist_ok=True)
         
         # Create and launch the GUI
-        demo = create_gui()
+        demo, custom_css = create_gui()
         demo.launch(
             server_name="127.0.0.1",
             server_port=args.port,
             share=False,
-            show_error=True
+            show_error=True,
+            css=custom_css,
+            theme=gr.themes.Soft(
+                primary_hue="indigo",
+                secondary_hue="blue",
+            ),
         )
 
 
