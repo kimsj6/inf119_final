@@ -403,6 +403,8 @@ async def get_mcp_session() -> AsyncGenerator[ClientSession, None]:
             # Use tools...
     """
     # Configure server parameters to start the MCP server
+    # Use sys.executable to ensure we use the same Python interpreter
+    # This works across different systems (macOS, Linux, Windows)
     server_params = StdioServerParameters(
         command=sys.executable,
         args=["server.py"],
