@@ -37,6 +37,7 @@ from langgraph.prebuilt import create_react_agent
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage
 import asyncio
+import sys
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
@@ -144,18 +145,38 @@ async def run_requirements_agent(raw_description: str, session: ClientSession) -
 
     # Construct the detailed prompt for requirements analysis
     # This prompt guides the agent through the analysis process
-    requirements_prompt = f"""You are a Requirements Analyzer Agent. Your task is to analyze the following 
-software description and extract detailed, structured requirements.
+    requirements_prompt = f"""You are a Requirements Analyzer Agent.
+    Your task is to analyze the following software description and turn it into a detailed, 
+    structured requirements document.
 
-SOFTWARE DESCRIPTION:
-{raw_description}
+    SOFTWARE DESCRIPTION:
+    {raw_description}
 
-INSTRUCTIONS:
-1. Use the 'get_expense_comparator_requirements' tool to get the detailed requirements template.
-2. Save the structured requirements to 'requirements_spec.txt' using 'write_file' tool.
-3. Return a summary of the key requirements for the Code Generator Agent.
+    INSTRUCTIONS:
+    1. Generate a thorough, structured requirements document using ONLY the information in 
+        the software description plus reasonable, clearly-labeled assumptions.
+        - Do NOT invent major features that are not implied by the description.
+        - If you need to assume something, mark it with a prefix like 'ASSUMPTION:'.
 
-Be concise but thorough."""
+    2. Organize the requirements into clear sections, for example:
+        - High-level goal
+        - Data models
+        - Core functions and APIs
+        - User interactions / UI
+        - Persistence / storage
+        - Error handling and edge cases
+        - Testing requirements 
+
+    3. Write the document in a clean, Markdown-style format with headings and numbered lists
+       where appropriate, so another agent can read it easily.
+
+    4. Use the 'write_file' MCP tool to save the full document as 'requirements_spec.txt'
+       in the project output directory.
+
+    5. In your final message, return the full requirements text EXACTLY as written to the file.
+       This text will be passed directly to the Code Generator Agent, which must be able to 
+       implement the entire application from this document alone.
+    """
 
     # Execute the agent with the prompt
     # Increase recursion_limit to allow more tool calls
@@ -201,28 +222,45 @@ async def run_code_agent(requirements: str, session: ClientSession) -> str:
 
     # Construct the detailed prompt for code generation
     # This prompt provides clear structure and quality requirements
-    code_prompt = f"""You are a Code Generator Agent. Generate complete Python code for the Expense Comparator application.
+    code_prompt = f"""You are a Code Generator Agent. Your job is to generate complete, runnable Python code for the Expense Comparator application. 
+    
+    You have access to these MCP tools:
+        - create_directory(path: str)
+        - write_file(filename: str, content: str)
+        - validate_python_syntax(code: str) - read_file(filename: str)
+        - append_to_file(filename: str, content: str)
+    Do NOT invent tools that do not exist. Always use these tools to create files.
+    
+    REQUIREMENTS DOCUMENT:
+    {requirements}
 
-REQUIREMENTS:
-{requirements}
+    INSTRUCTIONS:
+    1. Carefully read the requirements document and plan the application structure.
+    2. Use 'create_directory' to create this directory: - 'expense_comparator'
+    3. Under 'expense_comparator', create these Python modules using 'write_file':
+        - 'expense_comparator/__init__.py'
+        - 'expense_comparator/models.py'
+        - 'expense_comparator/expense_manager.py'
+        - 'expense_comparator/comparator.py'
+        - 'expense_comparator/data_store.py'
+        - 'expense_comparator/visualizer.py'
+        - 'expense_comparator/cli.py'
+        - 'expense_comparator/main.py'
+    4. For each module:
+        - First generate the code in your reasoning.
+        - Call 'validate_python_syntax' on the code string.
+        - Only if syntax is valid, call 'write_file' to save it.
+        - If syntax is invalid, fix it and re-validate.
+    5. The code MUST:
+        - Implement the behavior described in the requirements (data models, core functions, etc.).
+        - Include type hints and docstrings for functions/classes.
+        - Use clean imports and avoid circular dependencies.
+        - Be runnable via: python -m expense_comparator.main or similar.
+    6. At the end, create a small 'run_app.py' in the root (not inside the package) that shows how to use the application, using 'write_file("run_app.py", ...)'.
+    7. In your final message back to the user:
+        - Summarize the created files and their purpose.
 
-Create these files using 'write_file' tool:
-
-1. expense_comparator/__init__.py - Package init
-2. expense_comparator/models.py - Category enum, Expense dataclass, DateRange dataclass
-3. expense_comparator/expense_manager.py - ExpenseManager class with add, get, delete, filter methods
-4. expense_comparator/comparator.py - compare_periods, get_category_totals functions
-5. expense_comparator/data_store.py - save_expenses, load_expenses (JSON)
-6. expense_comparator/visualizer.py - create_bar_chart, create_pie_chart (matplotlib)
-7. expense_comparator/cli.py - argparse CLI
-8. run_app.py - Demo script
-
-Each file must have:
-- Module docstring
-- Type hints
-- Docstrings for classes/functions
-
-Generate complete, working code. Return a summary of files created."""
+    Remember: do not print code in the chat. Use 'create_directory' and 'write_file' to actually create the files in the output directory."""
 
     # Execute the agent with the prompt
     # Increase recursion_limit to allow more tool calls (each file = ~2 calls)
@@ -242,7 +280,7 @@ Generate complete, working code. Return a summary of files created."""
     return final_message
 
 
-async def run_test_agent(requirements: str, code_summary: str, session: ClientSession) -> str:
+async def run_test_agent(requirements: str, session: ClientSession) -> str:
     """
     Run the Test Generator Agent.
     
@@ -271,34 +309,54 @@ async def run_test_agent(requirements: str, code_summary: str, session: ClientSe
     # This prompt ensures comprehensive test coverage
     prompt = f"""You are a Test Generator Agent. Create test cases for the Expense Comparator application.
 
-REQUIREMENTS: {requirements[:500]}...
+    REQUIREMENTS (truncated): {requirements[:500]}...
 
-CODE SUMMARY: {code_summary[:500]}...
+    TOOLS YOU CAN USE:
+    - read_file(filename: str)
+    - write_file(filename: str, content: str)
+    - append_to_file(filename: str, content: str)
+    - run_tests(test_filename: str)
 
-STEPS:
-1. Read the code files using 'read_file':
-   - expense_comparator/models.py
-   - expense_comparator/expense_manager.py
-   - expense_comparator/comparator.py
-   - expense_comparator/data_store.py
+    INSTRUCTIONS:
+    1. Use the requirements text above as your primary reference. 
+    Only use the 'read_file' tool if you really need to inspect a specific module's implementation.
+    When you do call 'read_file', read each file at most once and keep its contents in your reasoning
+    instead of calling the tool repeatedly.
 
-2. Create 'test_expense_comparator.py' with AT LEAST 12 tests:
-   - test_expense_creation
-   - test_category_enum
-   - test_add_expense
-   - test_get_expense
-   - test_delete_expense
-   - test_filter_by_category
-   - test_filter_by_date_range
-   - test_compare_periods
-   - test_get_category_totals
-   - test_save_and_load
-   - test_expense_serialization
-   - test_list_expenses
+    Relevant code files (if they exist):
+    - expense_comparator/models.py
+    - expense_comparator/expense_manager.py
+    - expense_comparator/comparator.py
+    - expense_comparator/data_store.py
 
-3. Use 'run_tests' to execute and report results.
+    2. Create a single pytest file named 'test_expense_comparator.py' with AT LEAST 12 independent test
+    functions that together cover the full behavior of the application.
 
-Each test needs a docstring and clear assertions. Target: 80%+ pass rate."""
+    Requirements for the tests:
+    - You MUST write the entire test file in ONE call to:
+        write_file("test_expense_comparator.py", <full file content>)
+    - Each test function must:
+        - Have a descriptive name like test_<feature>_<scenario>
+        - Have a short docstring explaining what it covers
+        - Use clear assert statements
+    - Across all tests, cover at least:
+        - Expense model creation and validation
+        - Category handling (enums or constants)
+        - Adding, retrieving, and deleting expenses
+        - Filtering by category and by date range
+        - Comparing two periods of expenses
+        - Saving to and loading from JSON, including edge cases
+
+    3. After you have written 'test_expense_comparator.py', call 'run_tests("test_expense_comparator.py")'
+    EXACTLY ONCE to execute the tests and see the results.
+
+    4. In your final message back to the user:
+    - State how many tests you created.
+    - Summarize what major behaviors they cover.
+    - Summarize the pytest output and approximate pass rate (e.g., "10/12 tests passed, ~83%").
+
+    Target: 80%+ pass rate with a minimum of 12 tests.
+    """
 
     # Execute the agent with the prompt
     # Increase recursion_limit to allow reading files + writing + running tests
@@ -346,7 +404,7 @@ async def get_mcp_session() -> AsyncGenerator[ClientSession, None]:
     """
     # Configure server parameters to start the MCP server
     server_params = StdioServerParameters(
-        command="python",
+        command=sys.executable,
         args=["server.py"],
     )
 
@@ -401,12 +459,12 @@ async def main() -> None:
         # Phase 2: Code Generation
         print("\n💻 PHASE 2: Code Generation")
         print("-"*40)
-        code_summary = await run_code_agent(requirements, session)
+        await run_code_agent(requirements, session)
 
         # Phase 3: Test Generation and Execution
         print("\n🧪 PHASE 3: Test Generation & Execution")
         print("-"*40)
-        test_results = await run_test_agent(requirements, code_summary, session)
+        test_results = await run_test_agent(requirements, session)
 
     # Display and save the model usage report
     print("\n" + "="*60)

@@ -79,7 +79,7 @@ async def run_agents_async(
         if progress_callback:
             progress_callback("🧪 Generating and running tests...")
             
-        test_results = await run_test_agent(requirements, code_summary, session)
+        test_results = await run_test_agent(requirements, session)
     
     # Get usage report
     usage_json = global_tracker.get_usage_report_json()
