@@ -1,6 +1,6 @@
 # run_tests.py
 # Name: Junxi Chen, Mark Qiu, Sung Jin Kim
-# Student ID: 70714925
+# Student ID: 70714925, 36732598, 10906553
 #
 # Description: Script to automatically run all generated tests
 # This script executes pytest on the generated test file and displays results.

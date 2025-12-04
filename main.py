@@ -1,6 +1,6 @@
 # main.py
 # Name: Junxi Chen, Mark Qiu, Sung Jin Kim
-# Student ID: 70714925
+# Student ID: 70714925, 36732598, 10906553
 #
 # Description: Main entry point for the AI Coder Multi-Agent System
 # This module provides a unified entry point for running the system in

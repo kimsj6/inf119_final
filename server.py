@@ -1,6 +1,6 @@
 # server.py
 # Name: Junxi Chen, Mark Qiu, Sung Jin Kim
-# Student ID: 70714925, , 10906553
+# Student ID: 70714925, 36732598, 10906553
 #
 # Description: MCP Server for the AI Coder Multi-Agent System
 # This module implements the MCP server that provides tools for the agents.

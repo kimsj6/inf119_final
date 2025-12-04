@@ -1,6 +1,6 @@
 # client.py
 # Name: Junxi Chen, Mark Qiu, Sung Jin Kim
-# Student ID: 70714925, , 10906553
+# Student ID: 70714925, 36732598, 10906553
 #
 # Description: Multi-Agent System Client using Model Context Protocol (MCP)
 # This module implements the multi-agent architecture for the AI Coder system.
